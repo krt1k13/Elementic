@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <link rel="icon" type="image/png" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elementic | Emoji Alchemy</title>
+    <title>Elementic | Minimal Alchemy</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;900&display=swap" rel="stylesheet">
     <style>
@@ -73,6 +73,18 @@
             transition: background 0.2s ease, transform 0.15s cubic-bezier(0.2, 0, 0.2, 1);
         }
 
+        /* Fusion loading state */
+        .fusing {
+            animation: pulse 0.5s infinite alternate;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        @keyframes pulse {
+            from { transform: translate(-50%, -50%) scale(1); filter: brightness(1); }
+            to { transform: translate(-50%, -50%) scale(0.9); filter: brightness(1.5) blur(2px); }
+        }
+
         .emoji-glow-bg {
             position: absolute;
             width: 100px;
@@ -138,7 +150,6 @@
     <main id="canvas-container" class="order-1 md:order-2 flex-1 relative bg-black overflow-hidden touch-none">
         <div id="grid-bg" class="absolute inset-0 pointer-events-none"></div>
         
-        <!-- SVG Layer for Link Lines -->
         <svg id="link-layer">
             <line id="connection-line" x1="0" y1="0" x2="0" y2="0" stroke="white" stroke-width="2" stroke-dasharray="4" opacity="0" />
         </svg>
@@ -172,11 +183,15 @@
             const s = sounds[name];
             if (s) {
                 s.currentTime = 0;
-                s.play().catch(() => {}); // Catch browser autoplay blocks
+                s.play().catch(() => {});
             }
         }
 
+        // --- Persistence & Cache ---
         let discovered = JSON.parse(localStorage.getItem('discovered_simple')) || [...INITIAL];
+        // Cache stores combinations: "Fire+Water": {emoji: "💨", name: "Steam"}
+        let comboCache = JSON.parse(localStorage.getItem('combo_cache')) || {};
+
         let workspace = [];
         let view = { x: 0, y: 0, scale: 1 };
         
@@ -212,6 +227,7 @@
             `).join('');
             document.getElementById('counter').innerText = `${String(discovered.length).padStart(2, '0')} / 999`;
             localStorage.setItem('discovered_simple', JSON.stringify(discovered));
+            localStorage.setItem('combo_cache', JSON.stringify(comboCache));
         }
 
         function updateLoop() {
@@ -229,18 +245,16 @@
                 }
             });
 
-            // Handle link line visibility
             if (activeId !== null) {
                 const activeItem = workspace.find(i => i.id === activeId);
                 const closest = workspace.find(other => 
-                    other.id !== activeId && Math.hypot(other.x - activeItem.x, other.y - activeItem.y) < 200
+                    other.id !== activeId && !other.fusing && Math.hypot(other.x - activeItem.x, other.y - activeItem.y) < 200
                 );
 
                 if (closest) {
                     const dist = Math.hypot(closest.x - activeItem.x, closest.y - activeItem.y);
                     const opacity = Math.max(0, 1 - (dist / 200));
                     
-                    // Convert workspace coords to screen coords for SVG
                     const x1 = activeItem.x * view.scale + view.x;
                     const y1 = activeItem.y * view.scale + view.y;
                     const x2 = closest.x * view.scale + view.x;
@@ -262,7 +276,6 @@
         }
 
         function spawn(emoji, name) {
-            const id = Date.now();
             const centerX = (container.clientWidth / 2 - view.x) / view.scale;
             const centerY = (container.clientHeight / 2 - view.y) / view.scale;
             spawnAt(emoji, name, centerX, centerY);
@@ -272,8 +285,11 @@
         function onDown(e) {
             const target = e.target.closest('[data-id]');
             if (target) {
-                activeId = parseFloat(target.dataset.id);
-                const item = workspace.find(i => i.id === activeId);
+                const id = parseFloat(target.dataset.id);
+                const item = workspace.find(i => i.id === id);
+                if (item.fusing) return; // Can't grab something already fusing
+
+                activeId = id;
                 const mouseX = (e.clientX - view.x) / view.scale;
                 const mouseY = (e.clientY - view.y) / view.scale;
                 
@@ -320,29 +336,11 @@
 
                 if (activeItem) {
                     const collision = workspace.find(other => 
-                        other.id !== activeId && Math.hypot(other.x - activeItem.x, other.y - activeItem.y) < 80
+                        other.id !== activeId && !other.fusing && Math.hypot(other.x - activeItem.x, other.y - activeItem.y) < 80
                     );
 
                     if (collision) {
-                        const result = await callAlchemy(activeItem, collision);
-                        if (result) {
-                            const midX = (activeItem.x + collision.x) / 2;
-                            const midY = (activeItem.y + collision.y) / 2;
-                            removeNode(activeItem.id);
-                            removeNode(collision.id);
-
-                            const isNew = !discovered.some(d => d.name.toLowerCase() === result.name.toLowerCase());
-                            if (isNew) {
-                                discovered.push(result);
-                                renderInventory();
-                                updateStatus(`New Discovery: ${result.name}`);
-                                playSound('discovery');
-                            } else {
-                                updateStatus(`Fused: ${result.name}`);
-                                playSound('drop');
-                            }
-                            spawnAt(result.emoji, result.name, midX, midY);
-                        }
+                        handleFusion(activeItem, collision);
                     }
                 }
                 activeId = null;
@@ -350,7 +348,55 @@
             isPanning = false;
         }
 
-        async function callAlchemy(e1, e2) {
+        async function handleFusion(e1, e2) {
+            // Optimistic UI: Mark as fusing immediately
+            e1.fusing = true;
+            e2.fusing = true;
+            const el1 = document.getElementById(`el-${e1.id}`);
+            const el2 = document.getElementById(`el-${e2.id}`);
+            el1?.classList.add('fusing');
+            el2?.classList.add('fusing');
+
+            const midX = (e1.x + e2.x) / 2;
+            const midY = (e1.y + e2.y) / 2;
+
+            // 1. Check Local Cache (Instant)
+            const comboKey = [e1.name, e2.name].sort().join('+');
+            let result = comboCache[comboKey];
+
+            if (!result) {
+                // 2. AI Call (Fallback)
+                result = await callAlchemyAI(e1, e2);
+                if (result) {
+                    comboCache[comboKey] = result;
+                }
+            }
+
+            if (result) {
+                removeNode(e1.id);
+                removeNode(e2.id);
+
+                const isNew = !discovered.some(d => d.name.toLowerCase() === result.name.toLowerCase());
+                if (isNew) {
+                    discovered.push(result);
+                    renderInventory();
+                    updateStatus(`New Discovery: ${result.name}`);
+                    playSound('discovery');
+                } else {
+                    updateStatus(`Fused: ${result.name}`);
+                    playSound('drop');
+                }
+                spawnAt(result.emoji, result.name, midX, midY);
+            } else {
+                // Fusion failed
+                e1.fusing = false;
+                e2.fusing = false;
+                el1?.classList.remove('fusing');
+                el2?.classList.remove('fusing');
+            }
+        }
+
+        async function callAlchemyAI(e1, e2) {
             updateStatus(`Analysing...`, true);
             const prompt = `Combine ${e1.emoji} ${e1.name} and ${e2.emoji} ${e2.name}. Return JSON: {"emoji": "...", "name": "..."}`;
             try {
@@ -368,8 +414,8 @@
         }
 
         function spawnAt(emoji, name, x, y) {
-            const id = Date.now();
-            const item = { id, emoji, name, x, y };
+            const id = Date.now() + Math.random();
+            const item = { id, emoji, name, x, y, fusing: false };
             workspace.push(item);
             const el = document.createElement('div');
             el.id = `el-${id}`;
@@ -401,7 +447,7 @@
             const label = document.getElementById('status-text');
             label.innerText = text;
             card.style.opacity = '1';
-            if (!loading) setTimeout(() => { card.style.opacity = '0'; }, 2500);
+            if (!loading) setTimeout(() => { card.style.opacity = '0'; }, 2000);
         }
 
         function clearBoard() { workspace = []; viewport.innerHTML = ''; }
