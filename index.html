@@ -8,134 +8,60 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --node-size: 140px;
-        }
-
+        :root { --node-size: 140px; }
         body { 
-            font-family: 'Inter', sans-serif; 
-            background: #000;
-            color: #fff;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: none;
-            overflow: hidden;
+            font-family: 'Inter', sans-serif; background: #000; color: #fff;
+            -webkit-tap-highlight-color: transparent; touch-action: none; overflow: hidden;
         }
-
         .glass-panel {
-            background: rgba(20, 20, 20, 0.7);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px); border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
         .inventory-item {
-            aspect-ratio: 1 / 1;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            cursor: pointer;
-            transition: all 0.2s ease;
+            aspect-ratio: 1 / 1; width: 100%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: all 0.2s ease;
         }
-
-        .inventory-item:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
+        .inventory-item:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); }
         .inventory-emoji { font-size: 2.5rem; margin-bottom: 4px; }
         .inventory-label { font-size: 9px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.5; }
-
         .element-node {
-            width: var(--node-size);
-            height: var(--node-size);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            position: absolute;
-            cursor: grab;
-            user-select: none;
-            will-change: transform, left, top;
-            transform: translate(-50%, -50%);
-            border: 1px solid transparent;
-            background-image: 
-                linear-gradient(rgba(20,20,20,0.8), rgba(20,20,20,0.8)), 
-                radial-gradient(circle at var(--rel-x) var(--rel-y), rgba(255,255,255,0.4) 0%, transparent 120px);
-            background-origin: border-box;
-            background-clip: padding-box, border-box;
+            width: var(--node-size); height: var(--node-size); display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px); position: absolute; cursor: grab;
+            user-select: none; will-change: transform, left, top; transform: translate(-50%, -50%);
+            border: 1px solid transparent; background-origin: border-box; background-clip: padding-box, border-box;
             transition: background 0.2s ease, transform 0.15s cubic-bezier(0.2, 0, 0.2, 1);
+            background-image: linear-gradient(rgba(20,20,20,0.8), rgba(20,20,20,0.8)), 
+                              radial-gradient(circle at var(--rel-x) var(--rel-y), rgba(255,255,255,0.4) 0%, transparent 120px);
         }
-
-        /* Fusion loading state */
-        .fusing {
-            animation: pulse 0.5s infinite alternate;
-            pointer-events: none;
-            opacity: 0.7;
-        }
-
+        .fusing { animation: pulse 0.5s infinite alternate; pointer-events: none; opacity: 0.7; }
         @keyframes pulse {
             from { transform: translate(-50%, -50%) scale(1); filter: brightness(1); }
             to { transform: translate(-50%, -50%) scale(0.9); filter: brightness(1.5) blur(2px); }
         }
-
         .emoji-glow-bg {
-            position: absolute;
-            width: 100px;
-            height: 100px;
+            position: absolute; width: 100px; height: 100px;
             background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
             pointer-events: none;
         }
-
-        .element-node:hover {
-            z-index: 10;
-            background-color: rgba(255, 255, 255, 0.07);
-            transform: translate(-50%, -50%) scale(1.05);
-        }
-
         .active-drag {
-            z-index: 1000 !important;
-            cursor: grabbing;
-            background-color: rgba(255, 255, 255, 0.1) !important;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
-            transform: translate(-50%, -50%) scale(1.1) !important;
-            transition: transform 0.1s ease-out !important; 
+            z-index: 1000 !important; cursor: grabbing; background-color: rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6); transform: translate(-50%, -50%) scale(1.1) !important;
         }
-
         .emoji-container { font-size: 3.5rem; z-index: 1; filter: drop-shadow(0 0 10px rgba(255,255,255,0.1)); }
         .element-label { font-size: 10px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.4; margin-top: 8px; z-index: 1; }
-
-        #grid-bg {
-            background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
-            background-size: 40px 40px;
-        }
-
-        #link-layer {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            z-index: 5;
-        }
-
+        #grid-bg { background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 40px 40px; }
+        #link-layer { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
         .btn-flat {
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            text-transform: uppercase;
-            font-size: 10px;
-            font-weight: 900;
-            letter-spacing: 0.2em;
-            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1); text-transform: uppercase;
+            font-size: 10px; font-weight: 900; letter-spacing: 0.2em; transition: all 0.2s ease;
         }
         .btn-flat:hover { background: #fff; color: #000; }
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col md:flex-row">
-
     <aside class="order-2 md:order-1 w-full md:w-80 glass-panel z-50 flex flex-col border-t md:border-t-0 md:border-r">
         <div class="p-8 flex items-center justify-between border-b border-white/5">
             <h1 class="font-black text-xs tracking-[0.3em] uppercase">Elementic</h1>
@@ -149,13 +75,8 @@
 
     <main id="canvas-container" class="order-1 md:order-2 flex-1 relative bg-black overflow-hidden touch-none">
         <div id="grid-bg" class="absolute inset-0 pointer-events-none"></div>
-        
-        <svg id="link-layer">
-            <line id="connection-line" x1="0" y1="0" x2="0" y2="0" stroke="white" stroke-width="2" stroke-dasharray="4" opacity="0" />
-        </svg>
-
+        <svg id="link-layer"><line id="connection-line" x1="0" y1="0" x2="0" y2="0" stroke="white" stroke-width="2" stroke-dasharray="4" opacity="0" /></svg>
         <div id="viewport" class="absolute inset-0 pointer-events-auto" style="transform-origin: 0 0;"></div>
-        
         <div class="absolute bottom-8 right-8 pointer-events-none">
             <div id="status-card" class="glass-panel px-8 py-4 opacity-0 transition-all duration-300">
                 <p id="status-text" class="text-[10px] font-black tracking-[0.4em] uppercase"></p>
@@ -164,7 +85,7 @@
     </main>
 
     <script>
-        const apiKey = "AIzaSyCbJphLDbaDObxhIEfGt4jzohMGQmwvFME"; 
+        const apiKey = "AIzaSyCbJphLDbaDObxhIEfGt4jzohMGQmwvFME"; // CRITICAL: Leave empty for runtime injection
         const INITIAL = [
             { emoji: '🔥', name: 'Fire' },
             { emoji: '💧', name: 'Water' },
@@ -172,7 +93,6 @@
             { emoji: '💨', name: 'Air' }
         ];
 
-        // --- Sound System ---
         const sounds = {
             pick: new Audio('pick.mp3'),
             drop: new Audio('drop.mp3'),
@@ -181,20 +101,13 @@
 
         function playSound(name) {
             const s = sounds[name];
-            if (s) {
-                s.currentTime = 0;
-                s.play().catch(() => {});
-            }
+            if (s) { s.currentTime = 0; s.play().catch(() => {}); }
         }
 
-        // --- Persistence & Cache ---
         let discovered = JSON.parse(localStorage.getItem('discovered_simple')) || [...INITIAL];
-        // Cache stores combinations: "Fire+Water": {emoji: "💨", name: "Steam"}
         let comboCache = JSON.parse(localStorage.getItem('combo_cache')) || {};
-
         let workspace = [];
         let view = { x: 0, y: 0, scale: 1 };
-        
         let activeId = null;
         let dragOffset = { x: 0, y: 0 };
         let isPanning = false;
@@ -211,10 +124,8 @@
             window.addEventListener('pointermove', onMove);
             window.addEventListener('pointerup', onUp);
             container.addEventListener('wheel', onWheel, { passive: false });
-            
             view.x = (container.clientWidth / 2);
             view.y = (container.clientHeight / 2);
-            
             requestAnimationFrame(updateLoop);
         }
 
@@ -232,46 +143,13 @@
 
         function updateLoop() {
             viewport.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.scale})`;
-            
             const grid = document.getElementById('grid-bg');
             grid.style.backgroundPosition = `${view.x}px ${view.y}px`;
             grid.style.backgroundSize = `${40 * view.scale}px ${40 * view.scale}px`;
-
             workspace.forEach(item => {
                 const el = document.getElementById(`el-${item.id}`);
-                if (el) {
-                    el.style.left = `${item.x}px`;
-                    el.style.top = `${item.y}px`;
-                }
+                if (el) { el.style.left = `${item.x}px`; el.style.top = `${item.y}px`; }
             });
-
-            if (activeId !== null) {
-                const activeItem = workspace.find(i => i.id === activeId);
-                const closest = workspace.find(other => 
-                    other.id !== activeId && !other.fusing && Math.hypot(other.x - activeItem.x, other.y - activeItem.y) < 200
-                );
-
-                if (closest) {
-                    const dist = Math.hypot(closest.x - activeItem.x, closest.y - activeItem.y);
-                    const opacity = Math.max(0, 1 - (dist / 200));
-                    
-                    const x1 = activeItem.x * view.scale + view.x;
-                    const y1 = activeItem.y * view.scale + view.y;
-                    const x2 = closest.x * view.scale + view.x;
-                    const y2 = closest.y * view.scale + view.y;
-
-                    connectionLine.setAttribute('x1', x1);
-                    connectionLine.setAttribute('y1', y1);
-                    connectionLine.setAttribute('x2', x2);
-                    connectionLine.setAttribute('y2', y2);
-                    connectionLine.setAttribute('opacity', opacity);
-                } else {
-                    connectionLine.setAttribute('opacity', 0);
-                }
-            } else {
-                connectionLine.setAttribute('opacity', 0);
-            }
-
             requestAnimationFrame(updateLoop);
         }
 
@@ -280,137 +158,6 @@
             const centerY = (container.clientHeight / 2 - view.y) / view.scale;
             spawnAt(emoji, name, centerX, centerY);
             playSound('drop');
-        }
-
-        function onDown(e) {
-            const target = e.target.closest('[data-id]');
-            if (target) {
-                const id = parseFloat(target.dataset.id);
-                const item = workspace.find(i => i.id === id);
-                if (item.fusing) return; // Can't grab something already fusing
-
-                activeId = id;
-                const mouseX = (e.clientX - view.x) / view.scale;
-                const mouseY = (e.clientY - view.y) / view.scale;
-                
-                dragOffset.x = mouseX - item.x;
-                dragOffset.y = mouseY - item.y;
-                
-                target.setPointerCapture(e.pointerId);
-                target.classList.add('active-drag');
-                playSound('pick');
-            } else {
-                isPanning = true;
-                panStart.x = e.clientX - view.x;
-                panStart.y = e.clientY - view.y;
-            }
-        }
-
-        function onMove(e) {
-            const nodes = document.querySelectorAll('.element-node');
-            nodes.forEach(node => {
-                const rect = node.getBoundingClientRect();
-                node.style.setProperty('--rel-x', `${e.clientX - rect.left}px`);
-                node.style.setProperty('--rel-y', `${e.clientY - rect.top}px`);
-            });
-
-            if (activeId !== null) {
-                const item = workspace.find(i => i.id === activeId);
-                if (item) {
-                    item.x = ((e.clientX - view.x) / view.scale) - dragOffset.x;
-                    item.y = ((e.clientY - view.y) / view.scale) - dragOffset.y;
-                }
-            } else if (isPanning) {
-                view.x = e.clientX - panStart.x;
-                view.y = e.clientY - panStart.y;
-            }
-        }
-
-        async function onUp(e) {
-            if (activeId !== null) {
-                const activeItem = workspace.find(i => i.id === activeId);
-                const el = document.getElementById(`el-${activeId}`);
-                if (el) el.classList.remove('active-drag');
-                
-                playSound('drop');
-
-                if (activeItem) {
-                    const collision = workspace.find(other => 
-                        other.id !== activeId && !other.fusing && Math.hypot(other.x - activeItem.x, other.y - activeItem.y) < 80
-                    );
-
-                    if (collision) {
-                        handleFusion(activeItem, collision);
-                    }
-                }
-                activeId = null;
-            }
-            isPanning = false;
-        }
-
-        async function handleFusion(e1, e2) {
-            // Optimistic UI: Mark as fusing immediately
-            e1.fusing = true;
-            e2.fusing = true;
-            const el1 = document.getElementById(`el-${e1.id}`);
-            const el2 = document.getElementById(`el-${e2.id}`);
-            el1?.classList.add('fusing');
-            el2?.classList.add('fusing');
-
-            const midX = (e1.x + e2.x) / 2;
-            const midY = (e1.y + e2.y) / 2;
-
-            // 1. Check Local Cache (Instant)
-            const comboKey = [e1.name, e2.name].sort().join('+');
-            let result = comboCache[comboKey];
-
-            if (!result) {
-                // 2. AI Call (Fallback)
-                result = await callAlchemyAI(e1, e2);
-                if (result) {
-                    comboCache[comboKey] = result;
-                }
-            }
-
-            if (result) {
-                removeNode(e1.id);
-                removeNode(e2.id);
-
-                const isNew = !discovered.some(d => d.name.toLowerCase() === result.name.toLowerCase());
-                if (isNew) {
-                    discovered.push(result);
-                    renderInventory();
-                    updateStatus(`New Discovery: ${result.name}`);
-                    playSound('discovery');
-                } else {
-                    updateStatus(`Fused: ${result.name}`);
-                    playSound('drop');
-                }
-                spawnAt(result.emoji, result.name, midX, midY);
-            } else {
-                // Fusion failed
-                e1.fusing = false;
-                e2.fusing = false;
-                el1?.classList.remove('fusing');
-                el2?.classList.remove('fusing');
-            }
-        }
-
-        async function callAlchemyAI(e1, e2) {
-            updateStatus(`Analysing...`, true);
-            const prompt = `Combine ${e1.emoji} ${e1.name} and ${e2.emoji} ${e2.name}. Return JSON: {"emoji": "...", "name": "..."}`;
-            try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { responseMimeType: "application/json" }
-                    })
-                });
-                const data = await res.json();
-                return JSON.parse(data.candidates[0].content.parts[0].text);
-            } catch { return null; }
         }
 
         function spawnAt(emoji, name, x, y) {
@@ -425,18 +172,104 @@
             viewport.appendChild(el);
         }
 
-        function removeNode(id) {
-            workspace = workspace.filter(i => i.id !== id);
-            document.getElementById(`el-${id}`)?.remove();
+        function onDown(e) {
+            const target = e.target.closest('[data-id]');
+            if (target) {
+                const id = parseFloat(target.dataset.id);
+                const item = workspace.find(i => i.id === id);
+                if (item.fusing) return;
+                activeId = id;
+                const mouseX = (e.clientX - view.x) / view.scale;
+                const mouseY = (e.clientY - view.y) / view.scale;
+                dragOffset.x = mouseX - item.x; dragOffset.y = mouseY - item.y;
+                target.setPointerCapture(e.pointerId);
+                target.classList.add('active-drag');
+                playSound('pick');
+            } else {
+                isPanning = true; panStart.x = e.clientX - view.x; panStart.y = e.clientY - view.y;
+            }
+        }
+
+        function onMove(e) {
+            if (activeId !== null) {
+                const item = workspace.find(i => i.id === activeId);
+                if (item) {
+                    item.x = ((e.clientX - view.x) / view.scale) - dragOffset.x;
+                    item.y = ((e.clientY - view.y) / view.scale) - dragOffset.y;
+                }
+            } else if (isPanning) {
+                view.x = e.clientX - panStart.x; view.y = e.clientY - panStart.y;
+            }
+        }
+
+        async function onUp(e) {
+            if (activeId !== null) {
+                const activeItem = workspace.find(i => i.id === activeId);
+                const el = document.getElementById(`el-${activeId}`);
+                el?.classList.remove('active-drag');
+                if (activeItem) {
+                    const collision = workspace.find(other => 
+                        other.id !== activeId && !other.fusing && Math.hypot(other.x - activeItem.x, other.y - activeItem.y) < 80
+                    );
+                    if (collision) handleFusion(activeItem, collision);
+                }
+                activeId = null;
+            }
+            isPanning = false;
+        }
+
+        async function handleFusion(e1, e2) {
+            e1.fusing = true; e2.fusing = true;
+            document.getElementById(`el-${e1.id}`)?.classList.add('fusing');
+            document.getElementById(`el-${e2.id}`)?.classList.add('fusing');
+            const midX = (e1.x + e2.x) / 2; const midY = (e1.y + e2.y) / 2;
+            const comboKey = [e1.name, e2.name].sort().join('+');
+            let result = comboCache[comboKey] || await callAlchemyAI(e1, e2);
+
+            if (result) {
+                comboCache[comboKey] = result;
+                workspace = workspace.filter(i => i.id !== e1.id && i.id !== e2.id);
+                document.getElementById(`el-${e1.id}`)?.remove();
+                document.getElementById(`el-${e2.id}`)?.remove();
+                const isNew = !discovered.some(d => d.name.toLowerCase() === result.name.toLowerCase());
+                if (isNew) { discovered.push(result); renderInventory(); playSound('discovery'); }
+                spawnAt(result.emoji, result.name, midX, midY);
+                updateStatus(isNew ? `New: ${result.name}` : `Fused: ${result.name}`);
+            } else {
+                e1.fusing = false; e2.fusing = false;
+                document.getElementById(`el-${e1.id}`)?.classList.remove('fusing');
+                document.getElementById(`el-${e2.id}`)?.classList.remove('fusing');
+                updateStatus("Fusion failed");
+            }
+        }
+
+        async function callAlchemyAI(e1, e2) {
+            updateStatus(`Analysing...`, true);
+            const prompt = `Combine ${e1.name} (${e1.emoji}) and ${e2.name} (${e2.emoji}) to create a new element. Respond only with JSON: {"emoji": "...", "name": "..."}`;
+            const delays = [1000, 2000, 4000];
+            for (let delay of delays) {
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            generationConfig: { responseMimeType: "application/json" }
+                        })
+                    });
+                    if (!response.ok) throw new Error('API Error');
+                    const data = await response.json();
+                    return JSON.parse(data.candidates[0].content.parts[0].text);
+                } catch (e) { await new Promise(r => setTimeout(r, delay)); }
+            }
+            return null;
         }
 
         function onWheel(e) {
             e.preventDefault();
-            const rect = container.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
             const factor = Math.exp(-e.deltaY * 0.001);
             const newScale = Math.min(Math.max(view.scale * factor, 0.2), 3);
+            const rect = container.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left; const mouseY = e.clientY - rect.top;
             view.x = mouseX - (mouseX - view.x) * (newScale / view.scale);
             view.y = mouseY - (mouseY - view.y) * (newScale / view.scale);
             view.scale = newScale;
@@ -444,10 +277,9 @@
 
         function updateStatus(text, loading = false) {
             const card = document.getElementById('status-card');
-            const label = document.getElementById('status-text');
-            label.innerText = text;
+            document.getElementById('status-text').innerText = text;
             card.style.opacity = '1';
-            if (!loading) setTimeout(() => { card.style.opacity = '0'; }, 2000);
+            if (!loading) setTimeout(() => card.style.opacity = '0', 2000);
         }
 
         function clearBoard() { workspace = []; viewport.innerHTML = ''; }
